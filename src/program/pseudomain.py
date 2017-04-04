@@ -13,6 +13,9 @@ class Main:
         tree.init_classes()
         tree.gen_class_to_feature_value_based_on_deptree()
         tree.generate_data_sheet()
+        training = TrainAndTest(tree.data_sheet,tree.rand)
+        training.shuffle_trainingset()
+        training.k_fold(8000)
 class DepTree:
     
     def __init__(self,d,c):
@@ -88,7 +91,7 @@ class DepTree:
     def generate_data_sheet(self):
         self.data_sheet = []
         for c in range(0,len(self.class_set)):
-            for i in range(0,500):
+            for i in range(0,2000):
                 F0_Threshold =  float(self.feat_set_value[0][c].split(":")[1]) 
                 F0  = self.rand.randint(0,100)/100.0 > F0_Threshold
                 if F0:
@@ -211,3 +214,79 @@ class Tree:
             level = level + 1
     
         return tstr
+
+
+class TrainAndTest:
+    
+    
+    def __init__(self,data_sheet,rand):
+        self.training_set = copy.deepcopy(data_sheet)
+        self.rand = rand
+    def shuffle_trainingset(self):
+        self.rand.shuffle(self.training_set)
+    
+    def k_fold(self,sample_size):
+        test_set = []
+        train_set = []
+        set_size = int(sample_size/5)
+        
+        for i in range(1,2):
+            test_set = []
+            train_set = []            
+            low = (i-1)*set_size
+            high = (i*set_size)
+            bot_set_low = 0                        
+            bot_set_high= low
+            top_set_low = high
+            top_set_high = sample_size               
+       
+            
+            test_set = self.training_set[low:high]  
+            if bot_set_high > 0:
+                train_set = train_set + self.training_set[bot_set_low:bot_set_high]
+            if top_set_low < sample_size:
+                train_set = train_set + self.training_set[top_set_low:top_set_high]
+            
+ 
+            prob_test = TrainAndTest.gather_data_dep_tree(test_set)
+            prob_train = TrainAndTest.gather_data_dep_tree(train_set)
+            
+            
+        
+    
+    def gather_data_dep_tree(t_set):
+        probability_t = []
+        c0_t = []
+        c1_t = []
+        c2_t = []
+        c3_t = []
+        for c in range(0,len(t_set[0])):
+            c0_t.append(0)
+            c1_t.append(0)
+            c2_t.append(0)
+            c3_t.append(0)
+        
+        probability_t = [c0_t,c1_t,c2_t,c3_t]
+        for s in t_set:
+            c_val = s[0]
+            probability_t[c_val][0] =  probability_t[c_val][0] + 1            
+            for i in range(1,len(s)):
+                
+                probability_t[c_val][i] =  probability_t[c_val][i] + s[i]
+        return probability_t
+   
+    def deptreeestimate():
+        pass
+    
+    def bayseian_indepented(test,train):
+        p_c0_test = test[0][0]/1600
+        p_c1_test = test[1][0]/1600
+        p_c2_test = test[2][0]/1600
+        p_c3_test = test[3][0]/1600
+        
+    def bayseian_depented():
+        pass
+    
+    def desicionstree():
+        pass
+    
