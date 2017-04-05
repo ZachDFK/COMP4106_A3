@@ -284,6 +284,15 @@ class TrainAndTest:
         p_c2_test = test[2][0]/1600
         p_c3_test = test[3][0]/1600
         
+        p_c0_train = train[0][0]/6400
+        p_c1_train = train[1][0]/6400
+        p_c2_train = train[2][0]/6400
+        p_c3_train = train[3][0]/6400
+        
+        
+    
+        
+        
     def bayseian_depented():
         pass
     
