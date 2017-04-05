@@ -15,7 +15,7 @@ class Main:
         tree.generate_data_sheet()
         training = TrainAndTest(tree.data_sheet,tree.rand)
         training.shuffle_trainingset()
-        training.k_fold(8000)
+        training.k_fold(8000,5)
 class DepTree:
     
     def __init__(self,d,c):
@@ -135,7 +135,7 @@ class DepTree:
                 F7  = self.rand.randint(0,100)/100.0 > F7_Threshold                
                 
                 temp_set =[c,int(F0),int(F1),int(F2),int(F3),int(F4),int(F5),int(F6),int(F7),int(F8),int(F9)]
-                print(temp_set)
+                #print(temp_set)
                 self.data_sheet.append(temp_set)
                 
     def get_feature_value(feature):
@@ -225,12 +225,18 @@ class TrainAndTest:
     def shuffle_trainingset(self):
         self.rand.shuffle(self.training_set)
     
-    def k_fold(self,sample_size):
+    def k_fold(self,sample_size,fold):
         test_set = []
         train_set = []
-        set_size = int(sample_size/5)
+        set_size = int(sample_size/fold)
+        total_error = []
+        for c in range(0,4):
+            temp_total = []
+            for f in range(0,10):
+                temp_total.append(0)
+            total_error.append(temp_total)
         
-        for i in range(1,2):
+        for i in range(1,fold):
             test_set = []
             train_set = []            
             low = (i-1)*set_size
@@ -247,13 +253,21 @@ class TrainAndTest:
             if top_set_low < sample_size:
                 train_set = train_set + self.training_set[top_set_low:top_set_high]
             
- 
+            
             prob_test = TrainAndTest.gather_data_dep_tree(test_set)
             prob_train = TrainAndTest.gather_data_dep_tree(train_set)
-            
-            
-        
-    
+            error  = TrainAndTest.bayseian_indepented(prob_test, prob_train,fold)
+            for c in range(0,4):
+                for f in range(0,10):            
+                    total_error[c][f] = total_error[c][f] + error[c][f]
+        avg_error = []
+        print("Average Error values:")
+        for c in range(0,4):
+            temp_avg = []
+            for f in range(0,10):
+                temp_avg.append(total_error[c][f]/fold)
+            avg_error.append(temp_avg)
+            print(temp_avg)
     def gather_data_dep_tree(t_set):
         probability_t = []
         c0_t = []
@@ -278,21 +292,74 @@ class TrainAndTest:
     def deptreeestimate():
         pass
     
-    def bayseian_indepented(test,train):
-        p_c0_test = test[0][0]/1600
-        p_c1_test = test[1][0]/1600
-        p_c2_test = test[2][0]/1600
-        p_c3_test = test[3][0]/1600
+    def bayseian_indepented(test,train,fold):
         
-        p_c0_train = train[0][0]/6400
-        p_c1_train = train[1][0]/6400
-        p_c2_train = train[2][0]/6400
-        p_c3_train = train[3][0]/6400
+        p_cval_test = []
+        p_cval_train = []
+        for c in range(0,4):
+            p_cval_test.append(test[c][0]/1600)
+            p_cval_train.append(train[c][0]/6400)
+            
         
+        p_fgcval_test = []
+        p_fgcval_train = []
+        p_fval_test = []
+        p_fval_train = []
+        for f in range(1,11):
+            total_f_test = 0
+            total_f_train = 0
+            temp_test = []
+            temp_train = []
+            for c in range(0,4):
+                temp_test.append(test[c][f]/test[c][0])
+                temp_train.append(train[c][f]/train[c][0])
+                total_f_test = total_f_test + test[c][f]
+                total_f_train = total_f_train + train[c][f]
+            
+            p_fval_test.append(total_f_test/1600)
+            p_fval_train.append(total_f_train/6400)
+            p_fgcval_test.append(temp_test)
+            p_fgcval_train.append(temp_train)
+            
+       
+        #print(p_cval_test)
+        #print(p_cval_train)
+        print("Feature given Class  test, for fold: " + str(fold))
+        for fcg in p_fgcval_test:
+            print(fcg)
+        print("Feature given Class  train, for fold: " + fold)
+        for fcg in p_fgcval_train:
+            print(fcg)
+        #print(p_fval_test)
+        #print(p_fval_train)      
         
-    
+        p_cgfval_test = []
+        p_cgfval_train = []        
+        error_cgf =[]
         
-        
+        for c in range(0,4):
+            temp_c_test = []
+            temp_c_train = []
+            temp_error = []
+            for f in range(0,10):
+                cgf_test = (p_fgcval_test[f][c]*p_cval_test[c])/p_fval_test[f]
+                cgf_train = (p_fgcval_train[f][c]*p_cval_train[c])/p_fval_train[f]        
+                temp_c_test.append(cgf_test)
+                temp_c_train.append(cgf_train)
+                temp_error.append(abs(cgf_test-cgf_train))
+            p_cgfval_test.append(temp_c_test)
+            p_cgfval_train.append(temp_c_train)
+            error_cgf.append(temp_error)
+        print("Class given Feature test, for fold: " + str(fold))
+        for cgf in p_cgfval_test:
+            print(cgf)
+        print("Class given Feature  train, for fold:" + str(fold))
+        for cgf in p_cgfval_train:
+            print(cgf)
+        print("Error of cgf, for fold:" + str(fold))   
+        for error in error_cgf:
+            print(error)
+        return error_cgf
     def bayseian_depented():
         pass
     
